@@ -121,8 +121,9 @@ class PowerFlowData(InMemoryDataset):
         super().__init__(root, transform, pre_transform, pre_filter)
         self.mask = torch.tensor([])
         self.data, self.slices, self.mask = self._normalize_dataset(
-            *torch.load(self.processed_paths[0]))  # necessary, do not forget!
-
+            *torch.load(
+                self.processed_paths[0],
+                weights_only=False))  # necessary, do not forget!
     def get_data_dimensions(self):
         return self[0].x.shape[1], self[0].y.shape[1], self[0].edge_attr.shape[1]
 

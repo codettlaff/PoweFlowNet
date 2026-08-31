@@ -24,6 +24,8 @@ def main():
     run_id = datetime.now().strftime("%Y%m%d") + '-' + str(random.randint(0, 9999))
     LOG_DIR = 'logs'
     SAVE_DIR = 'models'
+    os.makedirs(os.path.join(LOG_DIR, 'train_log'), exist_ok=True)
+    os.makedirs(SAVE_DIR, exist_ok=True)
     TRAIN_LOG_PATH = os.path.join(LOG_DIR, 'train_log/train_log_'+run_id+'.pt')
     SAVE_LOG_PATH = os.path.join(LOG_DIR, 'save_logs.json')
     SAVE_MODEL_PATH = os.path.join(SAVE_DIR, 'model_'+run_id+'.pt')

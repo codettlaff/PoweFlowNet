@@ -87,7 +87,7 @@ if GET_RESULTS:
             dropout_rate=0.2
         ).to(device)
 
-        _to_load = torch.load(model_path, map_location=device)
+        _to_load = torch.load(model_path, map_location=device, weights_only=False)
         MPN_model.load_state_dict(_to_load['model_state_dict'])
         MPN_model.eval()
 

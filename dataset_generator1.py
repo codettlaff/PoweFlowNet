@@ -14,8 +14,7 @@ import pandapower as pp
 from tqdm import tqdm
 
 # Configuration
-# NUMBER_OF_SAMPLES = 2000
-NUMBER_OF_SAMPLES = 100 # Test
+NUMBER_OF_SAMPLES = 2000
 NUMBER_OF_PROCESSES = 10
 
 # Helper Functions

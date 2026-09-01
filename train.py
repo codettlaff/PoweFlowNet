@@ -79,6 +79,12 @@ def main():
     valset = PowerFlowData(root=data_dir, case=grid_case, split=[.5, .2, .3], task='val', normalize=nomalize_data)
     testset = PowerFlowData(root=data_dir, case=grid_case, split=[.5, .2, .3], task='test', normalize=nomalize_data)
         
+    # Check we have the right dataset
+    print(f"Train samples: {len(trainset)}")
+    print(f"Validation samples: {len(valset)}")
+    print(f"Test samples: {len(testset)}")
+    print(f"Total samples: {len(trainset) + len(valset) + len(testset)}")
+    
     train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(valset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)

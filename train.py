@@ -135,7 +135,7 @@ def main():
             'loss': []},
     }
     # pbar = tqdm(range(num_epochs), total=num_epochs, position=0, leave=True)
-    for epoch in range(num_epochs):
+    for epoch in tqdm(range(num_epochs)):
         train_loss = train_epoch(
             model, train_loader, loss_fn, optimizer, device)
         val_loss = evaluate_epoch(model, val_loader, eval_loss_fn, device)
@@ -177,9 +177,6 @@ def main():
                     }
                 )
                 torch.save(train_log, TRAIN_LOG_PATH)
-
-        print(f"Epoch {epoch+1} / {num_epochs}: train_loss={train_loss:.4f}, val_loss={val_loss:.4f}, best_val_loss={best_val_loss:.4f}")
-
     
     
     print(f"Training Complete. Best validation loss: {best_val_loss:.4f}")

@@ -51,7 +51,8 @@ def main():
     
     # Network parameters
     nfeature_dim = args.nfeature_dim
-    efeature_dim = args.efeature_dim
+    # efeature_dim = args.efeature_dim
+    efeature_dim = 2 # R and X only
     hidden_dim = args.hidden_dim
     output_dim = args.output_dim
     n_gnn_layers = args.n_gnn_layers

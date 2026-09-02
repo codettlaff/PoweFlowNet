@@ -36,7 +36,6 @@ def main():
         'MaskEmbdMPN': MaskEmbdMPN,
         'MultiConvNet': MultiConvNet,
         'MultiMPN': MultiMPN,
-        'MaskEmbdMultiMPN': MaskEmbdMultiMPN
     }
     mixed_cases = ['118v2', '14v2']
 
@@ -58,7 +57,8 @@ def main():
     n_gnn_layers = args.n_gnn_layers
     conv_K = args.K
     dropout_rate = args.dropout_rate
-    model = models[args.model]
+    # model = models[args.model]
+    model = models['PowerFlowNetMPN']
 
     log_to_wandb = args.wandb
     wandb_entity = args.wandb_entity

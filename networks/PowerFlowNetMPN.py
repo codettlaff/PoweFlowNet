@@ -18,7 +18,7 @@ class EdgeAggregation(MessagePassing):
     """
     
     def __init__(self, nfeature_dim, efeature_dim, hidden_dim, output_dim):
-        super().__init__(aggre='add')
+        super().__init__(aggr='add')
         
         self.nfeature_dim = nfeature_dim
         self.efeature_dim = efeature_dim
@@ -73,7 +73,7 @@ class PowerFlowNetMPN(nn.Module):
         self.hidden_dim = hidden_dim
         self.n_gnn_layers = n_gnn_layers
         self.K = K
-        self.dropout_rate
+        self.dropout_rate = dropout_rate
         
         # The PowerFlowNet paper uses a learned two-layer mask encoder.
         # This maps the F-dimensional binary mask back to F dimensions.

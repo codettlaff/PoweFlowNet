@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from datasets.PowerFlowData import PowerFlowData
 from networks.MPN import MPN, MPN_simplenet, SkipMPN, MaskEmbdMPN, MultiConvNet, MultiMPN, MaskEmbdMultiMPN
+from networks.PowerFlowNetMPN import PowerFlowNetMPN
 from utils.argument_parser import argument_parser
 from utils.training import train_epoch, append_to_json
 from utils.evaluation import evaluate_epoch
@@ -36,6 +37,8 @@ def main():
         'MaskEmbdMPN': MaskEmbdMPN,
         'MultiConvNet': MultiConvNet,
         'MultiMPN': MultiMPN,
+        'MaskEmbdMultiMPN': MaskEmbdMultiMPN,
+        'PowerFlowNetMPN':PowerFlowNetMPN
     }
     mixed_cases = ['118v2', '14v2']
 

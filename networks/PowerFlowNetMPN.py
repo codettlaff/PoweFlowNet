@@ -35,6 +35,7 @@ class EdgeAggregation(MessagePassing):
         return self.edge_aggr(torch.cat([x_i, x_j, edge_attr], dim=-1))
     
     def forward(self, x, edge_index, edge_attr):
+        
         row, col = edge_index
         deg = degree(
             col,
@@ -87,6 +88,7 @@ class PowerFlowNetMPN(nn.Module):
         
         super().__init__()
         
+        self.input_proj = nn.Linear(nfeature_dim, hidden_dim)
         self.nfeature_dim = nfeature_dim
         self.efeature_dim = efeature_dim
         self.output_dim = output_dim
@@ -107,45 +109,45 @@ class PowerFlowNetMPN(nn.Module):
         # 2. Redisdual addition
         # 3. K-hop TAGConv
         # The final layer contains message-passing / readout operation, without TAGConv.
-        self.layers = nn.ModuleList()
+        self.message_layers = nn.ModuleList()
+        self.tag_convs = nn.ModuleList()
         
         if n_gnn_layers == 1:
-            self.layers.append(
+            self.message_layers.append(
                 EdgeAggregation(
-                    nfeature_dim,
-                    efeature_dim,
-                    hidden_dim,
-                    output_dim))
+                    nfeature_dim=hidden_dim,
+                    efeature_dim=2,
+                    hidden_dim=hidden_dim,
+                    output_dim=output_dim))
         else: 
-            # First PowerFlowConv
-            self.layers.append(
-                EdgeAggregation(
-                    nfeature_dim,
-                    efeature_dim,
-                    hidden_dim,
-                    hidden_dim))
-            self.layers.append(TAGConv(hidden_dim, hidden_dim, K=K))
-            
-            # Remaining intermediate PowerFlowConv layers
-            for _ in range(n_gnn_layers - 2):
-                self.layers.append(
+            # L-1 intermediate message-passing blocks.
+            for _ in range(n_gnn_layers - 1):
+                self.message_layers.append(
                     EdgeAggregation(
-                        hidden_dim,
-                        efeature_dim,
-                        hidden_dim,
-                        hidden_dim))
-                self.layers.append(
-                    TAGConv(hidden_dim, hidden_dim, K=K))
+                        nfeature_dim=hidden_dim,
+                        efeature_dim=2,
+                        hidden_dim=hidden_dim,
+                        output_dim=hidden_dim))
                 
-            # Final message-passing / readout layer.
-            self.layers.append(
+                self.tag_convs.append(
+                    TAGConv(
+                        in_channels=hidden_dim,
+                        out_channels=hidden_dim,
+                        K=K))
+
+            # Final message-passing/readout layer; no TAGConv follows it.
+            self.message_layers.append(
                 EdgeAggregation(
-                    hidden_dim,
-                    efeature_dim,
-                    hidden_dim,
-                    output_dim))
+                    nfeature_dim=hidden_dim,
+                    efeature_dim=2,
+                    hidden_dim=hidden_dim,
+                    output_dim=output_dim))
             
         self.dropout = nn.Dropout(dropout_rate)
+        
+    @property
+    def layers(self):
+        return self.message_layers
         
     @staticmethod
     def is_directed(edge_index):
@@ -185,6 +187,7 @@ class PowerFlowNetMPN(nn.Module):
         # Mask encoder:
         # X^0_i = x_i + mask_embedding(m_i)
         x = x + self.mask_embd(mask)
+        x = self.input_proj(x)
         edge_index, edge_attr = self.undirect_graph(data.edge_index, data.edge_attr)
         
         # Project's edge representation contains five processed attributes.
@@ -202,23 +205,17 @@ class PowerFlowNetMPN(nn.Module):
         # Intermediate PowerFlowConv blocks.
         layer_index = 0
         
-        for _ in range(self.n_gnn_layers - 1):
-            message_layer = self.layers[layer_index]
-            tag_layer = self.layers[layer_index + 1]
+        for i in range(self.n_gnn_layers - 1):
             
             # One-hop edge-aware message passing
-            message = message_layer(
+            message = self.message_layers[i](
                 x=x,
                 edge_index=edge_index,
                 edge_attr=edge_attr)
             
             # Residual addition described in Eq. (10)-(11).
             x = x + message
-            
-            # High-order TAGConv
-            x = tag_layer(
-                x=x,
-                edge_index=edge_index)
+            x = self.tag_convs[i](x, edge_index)
             
             # ReLU + droput at the end of the intermediate layer.
             x = torch.relu(x)
@@ -226,7 +223,7 @@ class PowerFlowNetMPN(nn.Module):
             layer_index += 2
             
         # Final PowerFlowConv: message passing only, no TAGConv
-        return self.layers[layer_index](
+        return self.message_layers[-1](
             x=x,
             edge_index=edge_index,
             edge_attr=edge_attr)

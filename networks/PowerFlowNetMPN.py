@@ -7,6 +7,7 @@ Created on Wed Sep  2 09:00:11 2026
 
 import torch
 import torch.nn as nn
+from torch_geometric.utils import degree
 from torch_geometric.nn import MessagePassing, TAGConv
 
 class EdgeAggregation(MessagePassing):
@@ -30,15 +31,34 @@ class EdgeAggregation(MessagePassing):
             nn.ReLU(),
             nn.Linear(hidden_dim, output_dim))
         
-        def message(self, x_i, x_j, edge_attr):
-            return self.edge_aggr(torch.cat([x_i, x_j, edge_attr], dim=-1))
+    def message(self, x_i, x_j, edge_attr):
+        return self.edge_aggr(torch.cat([x_i, x_j, edge_attr], dim=-1))
+    
+    def forward(self, x, edge_index, edge_attr):
+        row, col = edge_index
+        deg = degree(
+            col,
+            x.size(0),
+            dtype=x.dtype)
         
-        def forward(self, x, edge_index, edge_attr):
-            return self.propagate(
-                edge_index=edge_index,
-                x=x,
-                edge_attr=edge_attr)
+        deg_inv_sqrt = deg.pow(-0.5)
+        deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0.
+        norm = deg_inv_sqrt[row] * deg_inv_sqrt[col]
         
+        out = self.propagate(
+            x=x,
+            edge_index=edge_index,
+            edge_attr=edge_attr,
+            norm=norm)
+        
+        return out
+    
+    def forward_old(self, x, edge_index, edge_attr):
+        return self.propagate(
+            edge_index=edge_index,
+            x=x,
+            edge_attr=edge_attr)
+    
 class PowerFlowNetMPN(nn.Module):
     """
     PowerFlowNet architecture used for the replication experiment.
